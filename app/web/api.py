@@ -14,6 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import Scope
 
 from app.features.agent.orchestrator import tailor_resume_agent
 from app.features.agent.schema import AgentBudget, TailoringRunResult
@@ -50,6 +52,25 @@ class ConfirmPDFRequest(BaseModel):
 
 class HumanInputRequest(BaseModel):
     notes: str = Field(default="", max_length=5000)
+
+
+class SPAStaticFiles(StaticFiles):
+    """Serve built assets and fall back to index.html for client-side routes."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        try:
+            response = await super().get_response(path, scope)
+        except StarletteHTTPException as error:
+            if error.status_code != 404:
+                raise
+        else:
+            if response.status_code != 404:
+                return response
+
+        is_api_path = path == "api" or path.startswith("api/")
+        if scope["method"] not in {"GET", "HEAD"} or is_api_path:
+            raise StarletteHTTPException(status_code=404)
+        return await super().get_response("index.html", scope)
 
 
 class RunRecord:
@@ -141,7 +162,14 @@ def stream_run(run_id: UUID) -> StreamingResponse:
             if message["type"] in {"completed", "failed"}:
                 break
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.post("/api/runs/{run_id}/edits", status_code=202)
@@ -302,4 +330,8 @@ def _start_worker(record: RunRecord, instruction: str | None = None) -> None:
 
 _frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 if _frontend_dist.is_dir():
-    app.mount("/", StaticFiles(directory=_frontend_dist, html=True), name="frontend")
+    app.mount(
+        "/",
+        SPAStaticFiles(directory=_frontend_dist, html=True),
+        name="frontend",
+    )
