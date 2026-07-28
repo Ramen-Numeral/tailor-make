@@ -5,6 +5,7 @@ import {
   Sparkles, Upload, UserRound, WandSparkles, X,
 } from "lucide-react";
 import { downloadPdf, editRun, parsePdf, provideHumanInput, startRun, updateRunResume } from "./api";
+import { defaultJobListing } from "./defaultJobListing";
 import { defaultResume } from "./defaultResume";
 import type { Constraints, Diff, Item, Resume, RunResult, Trace, Usage } from "./types";
 
@@ -56,7 +57,7 @@ function App() {
   const [tab, setTab] = useState<Tab>("profile");
   const [resume, setResume] = useState<Resume>(clone(defaultResume));
   const [sourceResume, setSourceResume] = useState<Resume | null>(null);
-  const [job, setJob] = useState("");
+  const [job, setJob] = useState(defaultJobListing);
   const [traces, setTraces] = useState<Trace[]>([]);
   const [result, setResult] = useState<RunResult | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
@@ -187,6 +188,17 @@ function App() {
           <span className="eyebrow">Tailoring brief</span>
           <h2>What role are we aiming for?</h2>
           <p>Paste the complete listing. The agent will map only supported candidate evidence.</p>
+        </div>
+        <div className="job-input-actions">
+          <span>Job listing</span>
+          <button
+            type="button"
+            disabled={running}
+            aria-pressed={job === defaultJobListing}
+            onClick={() => setJob(defaultJobListing)}
+          >
+            <Sparkles /> {job === defaultJobListing ? "Sample loaded" : "Use sample"}
+          </button>
         </div>
         <textarea className="job-input" value={job} onChange={(e) => setJob(e.target.value)}
           placeholder="Paste the job listing here…" aria-label="Job listing" />
