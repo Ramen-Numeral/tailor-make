@@ -9,7 +9,7 @@ COPY frontend/ ./
 RUN npm run build
 
 
-FROM python:3.11-slim AS runtime
+FROM python:3.11-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     AI_DETECTION_ENABLED=false \
@@ -22,7 +22,7 @@ RUN apt-get update \
         build-essential \
         libcairo2 \
         libffi-dev \
-        libgdk-pixbuf2.0-0 \
+        libgdk-pixbuf-2.0-0 \
         libpango-1.0-0 \
         libpangocairo-1.0-0 \
         shared-mime-info \
