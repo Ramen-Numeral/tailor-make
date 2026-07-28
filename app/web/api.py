@@ -294,6 +294,7 @@ def _start_worker(record: RunRecord, instruction: str | None = None) -> None:
                         if record.human_in_the_loop and instruction is None
                         else None
                     ),
+                    fail_on_rewrite_error=instruction is not None,
                 )
             cumulative_diffs = build_resume_diffs(
                 record.source,
@@ -316,10 +317,17 @@ def _start_worker(record: RunRecord, instruction: str | None = None) -> None:
                 }
             )
         except Exception as error:
+            message = (
+                "Feedback could not be applied because the writing model "
+                "returned an invalid response. The previous resume was "
+                "preserved; your feedback is still available to retry."
+                if instruction is not None and isinstance(error, LLMError)
+                else str(error) or type(error).__name__
+            )
             record.events.put(
                 {
                     "type": "failed",
-                    "data": {"message": str(error) or type(error).__name__},
+                    "data": {"message": message},
                 }
             )
         finally:

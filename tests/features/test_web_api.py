@@ -4,9 +4,15 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from app.web import api as api_module
-from app.web.api import HumanInputRequest, UpdateRunResumeRequest
+from app.infrastructure.llm.errors import LLMError
 from app.infrastructure.llm.usage import meter_llm_usage, record_llm_call
-from app.web.api import app
+from app.web.api import (
+    HumanInputRequest,
+    RunRecord,
+    StartRunRequest,
+    UpdateRunResumeRequest,
+    app,
+)
 from config.resume.candidate_profile import build_resume
 
 
@@ -126,3 +132,31 @@ def test_human_input_resumes_waiting_run(monkeypatch) -> None:
     assert response == {"status": "accepted"}
     assert record.human_input_notes == "Used PostgreSQL in weekly reporting."
     assert record.human_input_event.is_set()
+
+
+def test_feedback_writer_failure_is_reported_and_preserves_resume(monkeypatch) -> None:
+    source = build_resume()
+    record = RunRecord(
+        StartRunRequest(
+            resume=source,
+            job_listing="Senior product manager",
+        )
+    )
+
+    def fail_rewrite(*args, **kwargs):
+        assert kwargs["special_instructions"] == "Emphasize customer research."
+        assert kwargs["fail_on_rewrite_error"] is True
+        raise LLMError("Invalid structured writer output")
+
+    monkeypatch.setattr(api_module, "tailor_resume_agent", fail_rewrite)
+
+    api_module._start_worker(
+        record,
+        instruction="Emphasize customer research.",
+    )
+    event = record.events.get(timeout=2)
+
+    assert event["type"] == "failed"
+    assert "Feedback could not be applied" in event["data"]["message"]
+    assert "still available to retry" in event["data"]["message"]
+    assert record.current == source

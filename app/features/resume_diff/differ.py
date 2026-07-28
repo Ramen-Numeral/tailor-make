@@ -53,6 +53,8 @@ def build_resume_diffs(
             item_label = _item_label(original_item)
             final_item = final_by_id.get(item_id)
             if final_item is None:
+                if not _has_item_content(original_item):
+                    continue
                 if item_id not in selected_by_id:
                     change_type = "not_selected"
                     reason = (
@@ -128,6 +130,8 @@ def build_resume_diffs(
         for final_item in final_by_id.values():
             if final_item.id in source_ids:
                 continue
+            if not _has_item_content(final_item):
+                continue
             final_text = _item_text(final_item)
             diffs.append(
                 FieldDiff(
@@ -198,10 +202,31 @@ def _value_text(value: DiffValue) -> str:
 
 def _item_text(item) -> str:
     return json.dumps(
-        item.model_dump(mode="json", exclude={"id"}, exclude_none=True),
+        _item_payload(item),
         ensure_ascii=False,
         sort_keys=True,
     )
+
+
+def _item_payload(item) -> dict:
+    return item.model_dump(
+        mode="json",
+        exclude={"id"},
+        exclude_none=True,
+    )
+
+
+def _has_item_content(item) -> bool:
+    def meaningful(value) -> bool:
+        if isinstance(value, str):
+            return bool(value.strip())
+        if isinstance(value, list):
+            return any(meaningful(child) for child in value)
+        if isinstance(value, dict):
+            return any(meaningful(child) for child in value.values())
+        return value is not None
+
+    return meaningful(_item_payload(item))
 
 
 def _item_label(item) -> str:

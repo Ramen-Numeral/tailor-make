@@ -67,15 +67,26 @@ function App() {
   const [edit, setEdit] = useState("");
   const [pages, setPages] = useState(1);
   const [includeSummary, setIncludeSummary] = useState(true);
-  const [verboseOutput, setVerboseOutput] = useState(false);
+  const [verboseOutput, setVerboseOutput] = useState(true);
   const [humanInTheLoop, setHumanInTheLoop] = useState(false);
   const [humanNotes, setHumanNotes] = useState("");
   const [humanInputPhase, setHumanInputPhase] = useState<"idle" | "submitting" | "resuming">("idle");
-  const [sidebar, setSidebar] = useState(true);
+  const [sidebar, setSidebar] = useState(
+    () => !window.matchMedia("(max-width: 760px)").matches,
+  );
+  const [appliedEdit, setAppliedEdit] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const streamRef = useRef<EventSource | null>(null);
   const saveTimerRef = useRef<number | null>(null);
   const editVersionRef = useRef(0);
+  const pendingEditRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 760px)");
+    const syncSidebar = (event: MediaQueryListEvent) => setSidebar(!event.matches);
+    mobile.addEventListener("change", syncSidebar);
+    return () => mobile.removeEventListener("change", syncSidebar);
+  }, []);
 
   const canRun = Boolean(resume.candidate.name?.trim() && job.trim() && !running);
   const lastHumanEvent = traces.filter(
@@ -98,6 +109,14 @@ function App() {
       const payload = JSON.parse((event as MessageEvent).data);
       setResult(payload.result);
       setUsage(payload.usage);
+      const appliedInstruction = typeof payload.edit_instruction === "string"
+        ? payload.edit_instruction.trim()
+        : "";
+      if (appliedInstruction) {
+        setAppliedEdit(appliedInstruction);
+        if (pendingEditRef.current === appliedInstruction) setEdit("");
+      }
+      pendingEditRef.current = null;
       setSaveStatus("idle");
       setRunning(false);
       setHumanInputPhase("idle");
@@ -106,6 +125,7 @@ function App() {
     });
     stream.addEventListener("failed", (event) => {
       setError(JSON.parse((event as MessageEvent).data).message);
+      pendingEditRef.current = null;
       setRunning(false);
       setHumanInputPhase("idle");
       stream.close();
@@ -114,6 +134,7 @@ function App() {
 
   async function begin() {
     setError(""); setTraces([]); setResult(null); setUsage(null);
+    setAppliedEdit(null); pendingEditRef.current = null;
     setHumanInputPhase("idle");
     setSourceResume(clone(resume)); setRunning(true); setTab("resume");
     try {
@@ -137,9 +158,15 @@ function App() {
 
   async function applyEdit() {
     if (!runId || !edit.trim()) return;
-    setError(""); setRunning(true); setTraces([]);
-    try { await editRun(runId, edit); setEdit(""); connect(runId); }
-    catch (e) { setError((e as Error).message); setRunning(false); }
+    const instruction = edit.trim();
+    setError(""); setRunning(true); setTraces([]); setAppliedEdit(null);
+    pendingEditRef.current = instruction;
+    try { await editRun(runId, instruction); connect(runId); }
+    catch (e) {
+      pendingEditRef.current = null;
+      setError((e as Error).message);
+      setRunning(false);
+    }
   }
 
   async function exportPdf() {
@@ -183,7 +210,16 @@ function App() {
   return (<>
     <div className={`shell ${sidebar ? "" : "sidebar-closed"} ${awaitingHumanInput ? "input-frozen" : ""}`}>
       <aside>
-        <div className="brand"><TailorMakeLogo /></div>
+        <div className="brand">
+          <TailorMakeLogo />
+          <button
+            className="icon sidebar-close"
+            aria-label="Close tailoring brief"
+            onClick={() => setSidebar(false)}
+          >
+            <X />
+          </button>
+        </div>
         <div className="aside-copy">
           <span className="eyebrow">Tailoring brief</span>
           <h2>What role are we aiming for?</h2>
@@ -215,6 +251,7 @@ function App() {
         </button>
         <div className="privacy"><Check /> Facts stay anchored to your source profile.</div>
       </aside>
+      {sidebar && <button className="sidebar-backdrop" aria-label="Close tailoring brief" onClick={() => setSidebar(false)} />}
 
       <main>
         <header>
@@ -235,7 +272,7 @@ function App() {
           {tab === "resume" && <ResumeWorkspace running={running} traces={traces} result={result}
             source={sourceResume} usage={usage} edit={edit} setEdit={setEdit}
             applyEdit={applyEdit} exportPdf={exportPdf} updateTailored={updateTailored}
-            saveStatus={saveStatus} verboseOutput={verboseOutput} />}
+            saveStatus={saveStatus} verboseOutput={verboseOutput} appliedEdit={appliedEdit} />}
         </section>
       </main>
     </div>
@@ -412,11 +449,11 @@ function ConstraintEditor({ resume, setResume }: { resume: Resume; setResume: (r
   </div>;
 }
 
-function ResumeWorkspace({ running, traces, result, source, usage, edit, setEdit, applyEdit, exportPdf, updateTailored, saveStatus, verboseOutput }: {
+function ResumeWorkspace({ running, traces, result, source, usage, edit, setEdit, applyEdit, exportPdf, updateTailored, saveStatus, verboseOutput, appliedEdit }: {
   running: boolean; traces: Trace[]; result: RunResult | null; source: Resume | null; usage: Usage | null;
   edit: string; setEdit: (v: string) => void; applyEdit: () => void; exportPdf: () => void;
   updateTailored: (resume: Resume) => void; saveStatus: "idle" | "saving" | "saved" | "error";
-  verboseOutput: boolean;
+  verboseOutput: boolean; appliedEdit: string | null;
 }) {
   const [view, setView] = useState<"diff" | "trace" | "edit">("trace");
   useEffect(() => {
@@ -435,6 +472,7 @@ function ResumeWorkspace({ running, traces, result, source, usage, edit, setEdit
       <p>{running ? "Decisions appear as each stage completes." : "Every change remains traceable to the source profile."}</p></div>
       {result && <button className="primary" disabled={saveStatus === "saving"} onClick={exportPdf}><Download /> {saveStatus === "saving" ? "Saving edits…" : "Confirm & download PDF"}</button>}
     </div>
+    {appliedEdit && <div className="feedback-applied"><Check /><div><strong>Feedback applied</strong><span>{appliedEdit}</span></div></div>}
     <div className="run-layout">
       <div className="result-pane">
         <div className="segmented"><button className={view === "trace" ? "active" : ""} onClick={() => setView("trace")}>Decision trace <span>{traces.length}</span></button><button className={view === "diff" ? "active" : ""} onClick={() => setView("diff")}>Changes</button>{result && <button className={view === "edit" ? "active" : ""} onClick={() => setView("edit")}>Edit</button>}</div>

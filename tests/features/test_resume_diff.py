@@ -1,6 +1,6 @@
 from app.features.agent.schema import PageTrimAction
 from app.features.resume_diff.differ import build_resume_diffs, inline_diff
-from app.resume_schema.resume_schema import MutableResume
+from app.resume_schema.resume_schema import MutableResume, ProfessionalSummaryItem
 from config.resume.candidate_profile import build_resume
 
 
@@ -130,3 +130,43 @@ def test_field_page_trim_is_labeled_separately_from_rewrite() -> None:
     assert skill_diff.change_type == "trimmed_for_page_limit"
     assert skill_diff.original[-1] == removed_skill
     assert skill_diff.final == item.skills[:-1]
+
+
+def test_empty_placeholder_item_is_not_reported_as_added() -> None:
+    source = MutableResume.model_validate(build_resume().model_dump())
+    source.summary = source.summary.model_copy(
+        update={"items": []},
+        deep=True,
+    )
+    selected = source.model_copy(deep=True)
+    final = source.model_copy(deep=True)
+    placeholder = ProfessionalSummaryItem(content=None)
+    final.summary = final.summary.model_copy(
+        update={"items": [placeholder]},
+        deep=True,
+    )
+
+    diffs = build_resume_diffs(source, selected, final)
+
+    assert all(diff.item_id != placeholder.id for diff in diffs)
+
+
+def test_nonempty_new_item_is_still_reported_as_added() -> None:
+    source = MutableResume.model_validate(build_resume().model_dump())
+    source.summary = source.summary.model_copy(
+        update={"items": []},
+        deep=True,
+    )
+    selected = source.model_copy(deep=True)
+    final = source.model_copy(deep=True)
+    summary = ProfessionalSummaryItem(content="Evidence-grounded summary.")
+    final.summary = final.summary.model_copy(
+        update={"items": [summary]},
+        deep=True,
+    )
+
+    diffs = build_resume_diffs(source, selected, final)
+
+    added = next(diff for diff in diffs if diff.item_id == summary.id)
+    assert added.change_type == "added"
+    assert added.final == '{"content": "Evidence-grounded summary."}'
