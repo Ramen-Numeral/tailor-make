@@ -34,8 +34,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY config ./config
 COPY ml_pipelines ./ml_pipelines
-COPY models ./models
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
+# Download trained detector weights into /app/models at build time
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='ramen-numeral/tailormake-detector', local_dir='models')"
 
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
