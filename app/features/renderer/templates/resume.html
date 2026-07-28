@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{ resume.candidate.name }} — Resume</title>
+
+  <style>
+    {% include "resume.css" %}
+  </style>
+</head>
+<body class="layout-{{ layout_profile }}">
+  <header class="resume-header">
+    <div class="identity">
+      <h1>{{ resume.candidate.name }}</h1>
+      {% if target_title %}
+        <p class="target-title">{{ target_title }}</p>
+      {% endif %}
+    </div>
+    {% if contact %}<p class="contact">{{ contact }}</p>{% endif %}
+  </header>
+
+  <main>
+    {% for section_item in sections %}
+      {% set section = section_item.section %}
+      {% include section_item.template %}
+    {% endfor %}
+  </main>
+</body>
+</html>

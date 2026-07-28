@@ -1,0 +1,6 @@
+{% if section['items'] %}
+<h2>{{ section['heading'] }}</h2>
+{% for item in section['items'] %}
+  <p class="summary">{{ item.content }}</p>
+{% endfor %}
+{% endif %}

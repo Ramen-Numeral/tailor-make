@@ -1,0 +1,19 @@
+{% if section['items'] %}
+<h2>{{ section['heading'] }}</h2>
+{% for job in section['items'] %}
+  <div class="job">
+    <div class="job-header">
+      <span class="job-title">{{ job.title }}</span>
+      <span class="job-dates">{{ job.start_date }}{% if job.end_date %} &ndash; {{ job.end_date }}{% endif %}</span>
+    </div>
+    <div class="job-company">{{ job.company }}{% if job.location %}, {{ job.location }}{% endif %}</div>
+    {% if job.bullets %}
+    <ul>
+      {% for bullet in job.bullets[:section['constraints'].max_bullets_per_item or 999] %}
+      <li>{{ bullet }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+{% endfor %}
+{% endif %}

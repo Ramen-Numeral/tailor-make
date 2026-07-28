@@ -1,0 +1,43 @@
+"""Canonical resume schema exports."""
+
+from app.resume_schema.resume_schema import (
+    Candidate,
+    Constraints,
+    EducationItem,
+    EducationSection,
+    MutableResume,
+    ProfessionalSummaryItem,
+    ProjectItem,
+    ProjectSection,
+    ResearchItem,
+    ResearchSection,
+    Resume,
+    Section,
+    SectionItem,
+    SkillCategoryItem,
+    SkillsSection,
+    SummarySection,
+    WorkExperienceItem,
+    WorkExperienceSection,
+)
+
+__all__ = [
+    "Candidate",
+    "Constraints",
+    "EducationItem",
+    "EducationSection",
+    "MutableResume",
+    "ProfessionalSummaryItem",
+    "ProjectItem",
+    "ProjectSection",
+    "ResearchItem",
+    "ResearchSection",
+    "Resume",
+    "Section",
+    "SectionItem",
+    "SkillCategoryItem",
+    "SkillsSection",
+    "SummarySection",
+    "WorkExperienceItem",
+    "WorkExperienceSection",
+]

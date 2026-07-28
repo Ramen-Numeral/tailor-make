@@ -1,0 +1,211 @@
+/* Editorial, ATS-friendly resume stylesheet rendered through Jinja. */
+
+@page {
+  size: Letter;
+  margin: 0.4in 0.5in;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  --ink: #17211e;
+  --muted: #52605b;
+  --accent: #247d69;
+  --hairline: #cbd6d1;
+  --resume-font-size: 10.5pt;
+  --resume-line-height: 1.35;
+  --resume-section-margin: 12px;
+
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 0.55in 0.7in;
+  background: #fff;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--resume-font-size);
+  line-height: var(--resume-line-height);
+}
+
+body.layout-compact {
+  --resume-font-size: 10pt;
+  --resume-line-height: 1.25;
+  --resume-section-margin: 9px;
+}
+
+body.layout-dense {
+  --resume-font-size: 9.5pt;
+  --resume-line-height: 1.18;
+  --resume-section-margin: 7px;
+}
+
+.resume-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 28px;
+  margin-bottom: 15px;
+  padding: 0 0 11px;
+  border-bottom: 3px solid var(--ink);
+}
+
+h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25pt;
+  font-weight: normal;
+  letter-spacing: -0.55px;
+  line-height: 0.96;
+}
+
+.target-title {
+  margin-top: 5px;
+  color: var(--accent);
+  font-size: 8.5pt;
+  font-weight: bold;
+  letter-spacing: 1.35px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.contact {
+  margin: 0;
+  max-width: 3.7in;
+  color: var(--muted);
+  font-size: 8.3pt;
+  line-height: 1.45;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: var(--resume-section-margin) 0 6px;
+  color: var(--ink);
+  font-size: 8.3pt;
+  letter-spacing: 1.55px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  break-after: avoid;
+}
+
+h2::after {
+  height: 1px;
+  flex: 1;
+  background: var(--hairline);
+  content: "";
+}
+
+p {
+  margin: 0;
+}
+
+.job,
+.project,
+.research,
+.education {
+  margin-bottom: 8px;
+  break-inside: avoid;
+}
+
+.job-header,
+.item-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.job-title,
+.item-title {
+  font-size: 10.2pt;
+  font-weight: 700;
+}
+
+.job-dates,
+.item-dates {
+  color: var(--muted);
+  font-size: 8.5pt;
+  font-weight: bold;
+  letter-spacing: 0.15px;
+}
+
+.job-company {
+  margin: 1px 0 3px;
+  color: var(--accent);
+  font-size: 9pt;
+  font-weight: 600;
+}
+
+.project-stack {
+  margin: 1px 0 3px;
+  color: var(--muted);
+  font-size: 8.5pt;
+  font-style: italic;
+}
+
+.skill-category {
+  margin-bottom: 3px;
+  padding-left: 26px;
+  text-indent: -26px;
+}
+
+.skill-category strong {
+  color: var(--accent);
+}
+
+.summary {
+  color: #2d3935;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 10.2pt;
+  line-height: 1.42;
+}
+
+ul {
+  margin: 2px 0 0 15px;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 2.5px;
+  padding-left: 2px;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+.education-meta {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 8.7pt;
+}
+
+.education-honors,
+.education-coursework {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 8.7pt;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media print {
+  body {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+}

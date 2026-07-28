@@ -1,0 +1,68 @@
+todo.txt
+output/
+models/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment files in env/ directory (keep examples, ignore actuals)
+env/*.env
+!env/*.example.env
+
+# Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+
+# Frontend
+frontend/node_modules/
+app/static/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+log/
+
+# Data
+dataset
+datasets/
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.arrow
+
+
+# Caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.huggingface/models/file
+models/

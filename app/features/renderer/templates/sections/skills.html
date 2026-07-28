@@ -1,0 +1,8 @@
+{% if section['items'] %}
+<h2>{{ section['heading'] }}</h2>
+{% for category in section['items'] %}
+  <p class="skill-category">
+    <strong>{{ category.name }}:</strong> {{ category.skills | join(", ") }}
+  </p>
+{% endfor %}
+{% endif %}

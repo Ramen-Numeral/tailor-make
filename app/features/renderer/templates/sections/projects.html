@@ -1,0 +1,19 @@
+{% if section['items'] %}
+<h2>{{ section['heading'] }}</h2>
+{% for project in section['items'] %}
+  <div class="job">
+    <div class="job-header">
+      <span class="job-title">{{ project.name }}</span>
+      {% if project.url %}<span class="job-dates">{{ project.url }}</span>{% endif %}
+    </div>
+    {% if project.technologies %}<div class="project-stack">{{ project.technologies | join(", ") }}</div>{% endif %}
+    {% if project.bullets %}
+    <ul>
+      {% for bullet in project.bullets[:section['constraints'].max_bullets_per_item or 999] %}
+      <li>{{ bullet }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+{% endfor %}
+{% endif %}

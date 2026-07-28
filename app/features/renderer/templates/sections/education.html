@@ -1,0 +1,27 @@
+{% if section['items'] %}
+<h2>{{ section['heading'] }}</h2>
+{% for edu in section['items'] %}
+  <div class="job">
+    <div class="job-header">
+      <span class="job-title">{{ edu.degree }}</span>
+      <span class="job-dates">{{ edu.graduation_date }}</span>
+    </div>
+    <div class="job-company">{{ edu.institution }}{% if edu.location %}, {{ edu.location }}{% endif %}</div>
+
+    {% if section['constraints'].show_gpa is not sameas false and edu.gpa %}
+    <div class="education-meta">GPA: {{ edu.gpa }}</div>
+    {% endif %}
+
+    {% if edu.honors %}
+    <div class="education-honors">Honors: {{ edu.honors | join(", ") }}</div>
+    {% endif %}
+
+    {% if section['constraints'].show_coursework is not sameas false and edu.coursework %}
+    <div class="education-coursework">
+      Relevant Coursework:
+      {{ edu.coursework[:section['constraints'].max_courses or 999] | join(", ") }}
+    </div>
+    {% endif %}
+  </div>
+{% endfor %}
+{% endif %}
