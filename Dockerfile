@@ -39,6 +39,11 @@ RUN apt-get update \
 COPY --chown=user:user requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN mkdir -p /home/user/.cache/huggingface \
+    && chown -R user:user /home/user
+
+USER user
+
 # Download the detector artifacts from the dedicated Hugging Face model
 # repository. Keeping this before application source copies lets Docker reuse
 # the large model layer when only application code changes.
@@ -48,8 +53,6 @@ COPY --chown=user:user app ./app
 COPY --chown=user:user config ./config
 COPY --chown=user:user ml_pipelines ./ml_pipelines
 COPY --chown=user:user --from=frontend-builder /app/frontend/dist ./frontend/dist
-
-USER user
 
 # Fail the image build if application code and downloaded detector artifacts
 # cannot be imported and deserialized together.
