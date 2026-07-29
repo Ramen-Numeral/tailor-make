@@ -16,7 +16,9 @@ from app.features.writer.prompts import make_global_writer_prompt, make_writer_p
 from app.resume_schema.resume_schema import (
     MutableResume,
     RESUME_SECTION_FIELDS,
+    Resume,
     Section,
+    SkillsSection,
     EducationSection,
     WorkExperienceSection,
     WRITABLE_SECTION_FIELDS,
@@ -170,10 +172,20 @@ def _merge_targeted_items(
     return original.model_copy(update={"items": items}, deep=True)
 
 
-def apply_resume_limits(resume: MutableResume) -> MutableResume:
+def apply_resume_limits(
+    resume: MutableResume,
+    reference: Resume | None = None,
+) -> MutableResume:
     """Apply deterministic section constraints to a resume copy."""
     updates = {
-        name: apply_structural_limits(section)
+        name: apply_structural_limits(
+            section,
+            reference=(
+                getattr(reference, name, None)
+                if reference is not None
+                else None
+            ),
+        )
         for name in RESUME_SECTION_FIELDS
         if (section := getattr(resume, name, None)) is not None
     }
@@ -181,7 +193,11 @@ def apply_resume_limits(resume: MutableResume) -> MutableResume:
     return MutableResume.model_validate(result.model_dump())
 
 
-def apply_structural_limits(section: Section) -> Section:
+def apply_structural_limits(
+    section: Section,
+    *,
+    reference: Section | None = None,
+) -> Section:
     """Apply configured list-size maximums without modifying prose."""
     constraints = section.constraints
     item_limits = [
@@ -202,6 +218,15 @@ def apply_structural_limits(section: Section) -> Section:
         if max_items is None or preserve_all_items
         else section.items[:max_items]
     )
+    if isinstance(section, SkillsSection):
+        items = _deduplicate_skill_categories(
+            items,
+            (
+                reference.items
+                if isinstance(reference, SkillsSection)
+                else []
+            ),
+        )
     limited_items = []
 
     for item in items:
@@ -221,6 +246,52 @@ def apply_structural_limits(section: Section) -> Section:
         )
 
     return section.model_copy(update={"items": limited_items}, deep=True)
+
+
+def _deduplicate_skill_categories(items, reference_items) -> list:
+    """Keep each normalized skill in one category, preferring its source owner."""
+    current_owners: dict[str, list] = {}
+    for item in items:
+        for skill in item.skills:
+            key = _skill_key(skill)
+            if key and item.id not in current_owners.setdefault(key, []):
+                current_owners[key].append(item.id)
+
+    reference_owners = {}
+    for item in reference_items:
+        for skill in item.skills:
+            reference_owners.setdefault(_skill_key(skill), item.id)
+
+    selected_owners = {
+        key: (
+            reference_owners[key]
+            if reference_owners.get(key) in owners
+            else owners[0]
+        )
+        for key, owners in current_owners.items()
+    }
+    deduplicated = []
+    for item in items:
+        retained = []
+        seen: set[str] = set()
+        for skill in item.skills:
+            key = _skill_key(skill)
+            if (
+                not key
+                or key in seen
+                or selected_owners.get(key) != item.id
+            ):
+                continue
+            seen.add(key)
+            retained.append(skill.strip())
+        deduplicated.append(
+            item.model_copy(update={"skills": retained}, deep=True)
+        )
+    return deduplicated
+
+
+def _skill_key(skill: str) -> str:
+    return " ".join(skill.casefold().split())
 
 
 def _make_global_response_schema(
@@ -336,5 +407,6 @@ def _apply_rewrites(
         for original, rewrite in zip(section.items, rewrites, strict=True)
     ]
     return apply_structural_limits(
-        section.model_copy(update={"items": items}, deep=True)
+        section.model_copy(update={"items": items}, deep=True),
+        reference=section,
     )

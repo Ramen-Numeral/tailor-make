@@ -69,7 +69,9 @@ only fields allowed by the response schema; all omitted fields are locked.
 Preserve every fact, employer, title, date, institution, technology, metric,
 responsibility, and outcome. Never invent or strengthen claims. Prefer
 supported required qualifications, follow constraints, vary phrasing, and
-return only a schema-valid JSON object. Nested accomplishment fields are
+return only a schema-valid JSON object. Within the skills section, include each
+skill keyword in at most one category and preserve its original category when
+it already exists. Nested accomplishment fields are
 When the response schema offers `alternatives` for a professional summary,
 return the primary version plus up to two materially different candidates:
 one conservative and one more assertive but fully supported.

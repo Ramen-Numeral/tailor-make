@@ -10,7 +10,13 @@ from app.features.job_listing_parser.listing_schema import JobListing, Requireme
 from app.features.renderer.renderer import render_html
 from app.features import pipeline as pipeline_module
 from app.features.writer import writer
-from app.resume_schema.resume_schema import Constraints, WorkExperienceItem, WorkExperienceSection
+from app.resume_schema.resume_schema import (
+    Constraints,
+    SkillCategoryItem,
+    SkillsSection,
+    WorkExperienceItem,
+    WorkExperienceSection,
+)
 from config.resume.candidate_profile import build_resume
 
 
@@ -209,6 +215,34 @@ def test_writer_enforces_max_bullets() -> None:
     limited = writer.apply_structural_limits(section)
 
     assert limited.items[0].bullets == ["one", "two"]
+
+
+def test_writer_keeps_each_skill_in_only_its_original_category() -> None:
+    product = SkillCategoryItem(name="Product", skills=["Roadmapping"])
+    analytics = SkillCategoryItem(name="Analytics", skills=["SQL"])
+    tools = SkillCategoryItem(name="Tools", skills=["Jira"])
+    reference = SkillsSection(items=[product, analytics, tools])
+    rewritten = reference.model_copy(
+        update={
+            "items": [
+                product.model_copy(
+                    update={"skills": ["Roadmapping", "SQL", "Jira"]}
+                ),
+                analytics.model_copy(update={"skills": ["SQL", "sql"]}),
+                tools.model_copy(update={"skills": ["Jira", "SQL"]}),
+            ]
+        },
+        deep=True,
+    )
+
+    limited = writer.apply_structural_limits(
+        rewritten,
+        reference=reference,
+    )
+
+    assert limited.items[0].skills == ["Roadmapping"]
+    assert limited.items[1].skills == ["SQL"]
+    assert limited.items[2].skills == ["Jira"]
 
 
 def test_writer_item_limits_do_not_remove_jobs_or_degrees() -> None:

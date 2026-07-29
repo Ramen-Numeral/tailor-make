@@ -108,7 +108,12 @@ def tailor_resume_agent(
         coverage_plan,
         stage="initial",
     )
-    _emit_match_score(events, initial_match_score, trace_callback)
+    _emit_match_score(
+        events,
+        initial_match_score,
+        coverage_plan,
+        trace_callback,
+    )
     positioning_brief = build_positioning_brief(job_listing, coverage_plan)
     _emit(
         events,
@@ -249,7 +254,7 @@ def tailor_resume_agent(
             "global_rewrite_failed using_selected_resume=true"
         )
         rewritten = selected
-    current = apply_resume_limits(rewritten)
+    current = apply_resume_limits(rewritten, reference=selected)
     _emit(
         events,
         AgentTraceEvent(
@@ -345,7 +350,12 @@ def tailor_resume_agent(
         final_coverage_plan,
         stage="final",
     )
-    _emit_match_score(events, final_match_score, trace_callback)
+    _emit_match_score(
+        events,
+        final_match_score,
+        final_coverage_plan,
+        trace_callback,
+    )
     bullet_quality = evaluate_bullets(fitted)
     recruiter_evaluation = evaluate_recruiter_quality(
         fitted,
@@ -476,6 +486,7 @@ def _emit(
 def _emit_match_score(
     events: list[AgentTraceEvent],
     match_score,
+    coverage_plan: CoveragePlan,
     callback: TraceCallback | None,
 ) -> None:
     label = "Initial profile" if match_score.stage == "initial" else "Final resume"
@@ -492,6 +503,7 @@ def _emit_match_score(
             ),
             score=match_score.score,
             match_score=match_score,
+            coverage_plan=coverage_plan,
             observations=[
                 *(
                     [

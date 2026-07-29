@@ -98,7 +98,7 @@ def tailor_resume(
         )
         rewritten = selected
 
-    constrained = apply_resume_limits(rewritten)
+    constrained = apply_resume_limits(rewritten, reference=selected)
     return (
         quality_hook(job_listing, constrained)
         if quality_hook is not None

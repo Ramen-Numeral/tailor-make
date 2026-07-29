@@ -294,6 +294,7 @@ def test_agent_orchestrator_retains_state_and_pipeline_events(
         "Initial profile match score",
         "Final resume match score",
     ]
+    assert all(event.coverage_plan is not None for event in score_events)
     assert result.state.initial_match_score.stage == "initial"
     assert result.state.final_match_score.stage == "final"
     assert len(coverage_inputs) == 2
