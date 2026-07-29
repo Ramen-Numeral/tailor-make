@@ -1,6 +1,6 @@
 todo.txt
 output/
-models/
+/models/
 # Python
 __pycache__/
 *.py[cod]
@@ -65,4 +65,8 @@ datasets/
 .mypy_cache/
 .ruff_cache/
 .huggingface/models/file
-models/
+/models/
+
+# Generated training diagnostics are not application source.
+ml_pipelines/models/**/catboost_info/
+ml_pipelines/models/**/*.ipynb
