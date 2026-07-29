@@ -1,7 +1,7 @@
 # TailorMake
 
 TailorMake is an evidence-grounded resume tailoring agent built to make its
-work visible. Instead of returning an unexplained rewrite, it streams a
+work visible. It streams a
 traceable account of what it found, what it changed, why it changed it, and
 which job requirements the candidate's resume does not support.
 
