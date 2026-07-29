@@ -1,5 +1,6 @@
 import polars as pl
 
+from app.utils.text import get_sentences, get_words
 from config.train_data import TrainDataConfig
 from ml_pipelines.data.feature_util import (
     avg_adverbs_per_sent,
@@ -11,8 +12,6 @@ from ml_pipelines.data.feature_util import (
     avg_semicolon_per_sent,
     avg_word_repetition,
     coefficient_of_variation,
-    get_sentences,
-    get_words,
     hapax_ratio,
     lengths,
     max_word_length,

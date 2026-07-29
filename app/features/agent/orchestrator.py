@@ -236,6 +236,7 @@ def tailor_resume_agent(
             trace_callback,
         )
 
+    global_rewrite_completed = False
     try:
         rewrite_instructions = _rewrite_instructions(
             special_instructions,
@@ -247,6 +248,7 @@ def tailor_resume_agent(
             selected,
             special_instructions=rewrite_instructions,
         )
+        global_rewrite_completed = True
     except LLMError:
         if fail_on_rewrite_error:
             raise
@@ -259,8 +261,18 @@ def tailor_resume_agent(
         events,
         AgentTraceEvent(
             event_type="draft_generated",
-            title="Initial tailored draft generated",
-            summary="Starting section-specific factual and writing checks.",
+            title=(
+                "Global tailored draft generated"
+                if global_rewrite_completed
+                else "Global rewrite unavailable"
+            ),
+            summary=(
+                "The global writer completed. Starting section-specific "
+                "factual and writing checks."
+                if global_rewrite_completed
+                else "The selected factual resume was preserved. Starting "
+                "section-specific factual and writing checks."
+            ),
         ),
         trace_callback,
     )
@@ -392,8 +404,20 @@ def tailor_resume_agent(
             event_type="run_completed",
             title="Tailoring run completed",
             summary=(
-                f"{total_rewrites} section rewrite(s), "
-                f"{len(page_check.trim_actions)} page-fit trim(s)."
+                (
+                    "Global draft completed; "
+                    if global_rewrite_completed
+                    else "Global rewrite unavailable; selected content "
+                    "preserved; "
+                )
+                + (
+                    f"{total_rewrites} corrective section "
+                    f"{'retry' if total_rewrites == 1 else 'retries'}; "
+                )
+                + (
+                    f"{len(page_check.trim_actions)} page-fit "
+                    f"{'trim' if len(page_check.trim_actions) == 1 else 'trims'}."
+                )
             ),
             decision="accept_with_warnings" if has_warnings else "accept",
         ),

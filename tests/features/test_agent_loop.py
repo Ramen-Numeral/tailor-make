@@ -285,6 +285,10 @@ def test_agent_orchestrator_retains_state_and_pipeline_events(
     assert result.page_check.passed is True
     assert streamed[0].event_type == "run_started"
     assert streamed[-1].event_type == "run_completed"
+    assert streamed[-1].summary == (
+        "Global draft completed; 0 corrective section retries; "
+        "0 page-fit trims."
+    )
     score_events = [
         event
         for event in streamed
