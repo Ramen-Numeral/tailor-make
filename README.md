@@ -172,10 +172,10 @@ Build the frontend and serve the complete application from FastAPI:
 cd frontend
 npm run build
 cd ..
-.venv/bin/uvicorn app.web.api:app --host 0.0.0.0 --port 8000
+.venv/bin/uvicorn app.web.api:app --host 0.0.0.0 --port 7860
 ```
 
-Then open <http://localhost:8000>.
+Then open <http://localhost:7860>.
 
 ## Command-line demo
 

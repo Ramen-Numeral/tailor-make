@@ -13,9 +13,17 @@ FROM python:3.11-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     AI_DETECTION_ENABLED=false \
-    PORT=8000
+    HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH \
+    PORT=7860
 
-WORKDIR /app
+RUN useradd -m -u 1000 user \
+    && mkdir -p /home/user/app \
+    && chown -R user:user /home/user
+
+WORKDIR /home/user/app
+
+EXPOSE 7860
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -28,15 +36,17 @@ RUN apt-get update \
         shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY --chown=user:user requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY config ./config
-COPY ml_pipelines ./ml_pipelines
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+COPY --chown=user:user app ./app
+COPY --chown=user:user config ./config
+COPY --chown=user:user ml_pipelines ./ml_pipelines
+COPY --chown=user:user --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Download trained detector weights into /app/models at build time
+USER user
+
+# Download trained detector weights into the application model directory.
 RUN python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='ramen-numeral/tailormake-detector', local_dir='models')"
 
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
