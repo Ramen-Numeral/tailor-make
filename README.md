@@ -1,3 +1,9 @@
+---
+title: Tailor Make
+sdk: docker
+app_port: 7860
+---
+
 # TailorMake
 
 TailorMake is an evidence-grounded resume tailoring agent built to make its
