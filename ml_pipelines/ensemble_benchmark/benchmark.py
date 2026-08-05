@@ -1,7 +1,5 @@
 """Benchmark AI-detection components and their weighted ensemble.
 
-This module is deliberately isolated from application runtime code. It loads the
-existing artifacts, evaluates them on an external labelled dataset, and writes
 all generated reports beneath this package's ``reports/`` directory.
 """
 
