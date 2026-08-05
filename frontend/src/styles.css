@@ -140,3 +140,5 @@ aside .run:hover{background:#e2b84b;color:#111}
 @media(max-width:380px){.shell aside{width:100vw}}
 
 .feedback-applied{display:flex;align-items:flex-start;gap:11px;margin:-16px 0 24px;padding:12px 14px;border:1px solid #247d69;background:#e3eee9;color:#123e34}.feedback-applied>svg{width:17px;flex:0 0 auto}.feedback-applied>div{display:flex;flex-direction:column;gap:3px;min-width:0}.feedback-applied strong{font:600 10px DM Mono;text-transform:uppercase;letter-spacing:.08em}.feedback-applied span{font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+.attribution-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px}.attribution-summary>div{padding:9px;border:1px solid #cbc5bc}.attribution-summary b{font:600 9px DM Mono;text-transform:uppercase}.attribution-summary ol{margin:7px 0 0;padding-left:21px}.attribution-summary li{padding:2px}.attribution-summary li span{margin-right:8px}.attribution-summary em{float:right;font:9px DM Mono}.attribution-summary>small{grid-column:1/-1;color:#68736e}@media(max-width:620px){.attribution-summary{grid-template-columns:1fr}}
+.decision{display:inline-block;margin:7px 0 11px}

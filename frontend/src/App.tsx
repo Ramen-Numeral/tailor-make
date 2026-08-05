@@ -13,6 +13,30 @@ type Tab = "profile" | "constraints" | "resume";
 const sections = ["summary", "skills", "work_experience", "education", "projects", "research"] as const;
 const clone = <T,>(value: T): T => structuredClone(value);
 const valueText = (v: unknown) => Array.isArray(v) ? v.join("\n") : String(v ?? "");
+type Attribution = { token: string; attribution: number };
+
+function AttributionSummary({ tokens }: { tokens: Attribution[] }) {
+  const words: Array<{ word: string; score: number }> = [];
+  for (const { token, attribution } of tokens) {
+    if (token.startsWith("##") && words.length) {
+      words.at(-1)!.word += token.slice(2);
+      words.at(-1)!.score += attribution;
+    } else if (!/^[^\p{L}\p{N}]+$/u.test(token)) words.push({ word: token, score: attribution });
+  }
+  const limit = Math.max(...words.map(item => Math.abs(item.score)), 0) * .05;
+  const ranked = (machine: boolean) => words
+    .filter(item => machine ? item.score > limit : item.score < -limit)
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, 5);
+  return <div className="attribution-summary">
+    {[["Machine-like pushes", ranked(true)], ["Human-like pushes", ranked(false)]]
+      .map(([title, items]) => <div key={title as string}><b>{title as string}</b><ol>
+        {(items as typeof words).map((item, index) => <li key={`${item.word}-${index}`}>
+          <span>{item.word}</span><em>{item.score >= 0 ? "+" : ""}{item.score.toFixed(5)}</em>
+        </li>)}
+      </ol></div>)}
+    <small>Relative influence within this passage, not probability or proof of authorship.</small>
+  </div>;
+}
 
 function TailorMakeLogo() {
   return <div className="tailormake-logo">
@@ -564,7 +588,7 @@ function TraceList({ traces, running, verbose }: { traces: Trace[]; running: boo
           <ul>{t.evaluation.detection.feature_evidence.map(feature => <li key={feature.label}><b>#{feature.importance_rank} {feature.label}</b> · {feature.direction.replaceAll("_", " ")} · observed {feature.observed_value.toFixed(3)} · SHAP {feature.shap_value >= 0 ? "+" : ""}{feature.shap_value.toFixed(3)} — {feature.description}</li>)}</ul>
         </details>}
         {verbose && t.evaluation.detection.components.map(component => <Fragment key={`${component.model_name}-explanation`}>
-          {component.model_name === "distilbert" && component.token_attributions.length > 0 && <details><summary>DistilBERT Integrated Gradients · all tokens</summary><div className="token-evidence">{component.token_attributions.map((token, j) => <span className={token.direction} key={j} title={`${token.attribution >= 0 ? "+" : ""}${token.attribution.toFixed(5)}`}>{token.token} </span>)}</div></details>}
+          {component.model_name === "distilbert" && component.token_attributions.length > 0 && <AttributionSummary tokens={component.token_attributions} />}
           {component.model_name === "tfidf_svm" && component.term_contributions.length > 0 && <details><summary>TF-IDF phrase signals</summary><ul>{component.term_contributions.slice(0, 12).map(term => <li key={term.term}><b>{term.term}</b> · {term.contribution >= 0 ? "+" : ""}{term.contribution.toFixed(3)} ({term.direction.replaceAll("_", " ")})</li>)}</ul>{component.explanation_note && <p>{component.explanation_note}</p>}</details>}
         </Fragment>)}
         {verbose && t.evaluation.counterfactual && <details open><summary>Rewrite counterfactual · {t.evaluation.counterfactual.delta <= 0 ? "improved" : "regressed"} {Math.abs(t.evaluation.counterfactual.delta * 100).toFixed(1)} points</summary><ul>{t.evaluation.counterfactual.components.map(component => <li key={component.model_name}><b>{component.model_name.replaceAll("_", " ")}</b>: {component.before.toFixed(3)} → {component.after.toFixed(3)} ({component.delta >= 0 ? "+" : ""}{component.delta.toFixed(3)})</li>)}</ul></details>}</>}
